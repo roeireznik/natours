@@ -98,8 +98,21 @@ exports.webhookCheckout = (req, res, next) => {
     return res.status(400).send(`Webhook error: ${err.message}`);
   }
   if (event.type === 'checkout.session.completed') {
-    createBookingCheckout(event.data.object);
-    res.status(200).json({ received: true });
+    console.log('Checkout Session Completed Event Received!');
+    console.log('Session Object:', event.data.object);
+
+    // Respond to Stripe *immediately* (before any async operations)
+    res.status(200).json({ received: true }); // <--- Crucial: Respond *first*
+
+    // Now, perform your asynchronous operation (create the booking)
+    createBookingCheckout(event.data.object)
+      .then(() => {
+        console.log('Booking created successfully (async)');
+      })
+      .catch((error) => {
+        console.error('Error creating booking (async):', error);
+        // Important: Handle the error appropriately.
+      });
   }
 };
 
