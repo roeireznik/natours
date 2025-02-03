@@ -41,6 +41,8 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
       },
     ],
   });
+  console.log('Stripe Session Object:', session); // Log the entire session object
+
   // 3) Create session as response
   res.status(200).json({
     status: 'success',
