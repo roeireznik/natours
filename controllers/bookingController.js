@@ -54,14 +54,28 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
 const createBookingCheckout = async (session) => {
   const tour = session.client_reference_id;
   const user = (await User.findOne({ email: session.customer_email })).id;
+  if (!user) {
+    console.error('User not found for email:', session.customer_email);
+    throw new Error('User not found'); // Stop execution and log the error
+  }
   const price = session.line_items[0].price_data.unit_amount / 100;
   await Booking.create({ tour, user, price });
 };
 
 exports.webhookCheckout = (req, res, next) => {
+  console.log('Webhook hit!');
+
   const signature = req.headers['stripe-signature'];
   let event;
   try {
+    const body = JSON.parse(req.body.toString('utf8')); // Parse the buffer to JSON
+    console.log('Parsed request body:', body);
+    const id = body.data.object.id; // Or body.id, body.data.id, etc. - check your logs!
+    console.log('ID:', id);
+    if (!id) {
+      console.error('ID is missing in webhook payload!');
+      return res.status(400).send('ID is required.');
+    }
     event = stripe.webhooks.constructEvent(
       req.body,
       signature,
