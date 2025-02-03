@@ -8,8 +8,14 @@ const factory = require('./handlerFactory');
 exports.getCheckoutSession = catchAsync(async (req, res, next) => {
   // 1) Get the currently booked tour
   const tour = await Tour.findById(req.params.tourID);
-
-  // 2) Create checkout session
+  console.log('Result of Tour.findById():', tour);
+  if (!tour) {
+    console.error('Tour not found with ID:', tourId); // Log the ID that wasn't found
+    return next(new AppError('No tour found with that ID.', 404)); // Return the error
+  }
+  console.log('Tour price:', tour.price); // Log the tour price (if tour was found)
+  console.log('Tour name:', tour.name); // Log the tour name
+  console.log('Tour image:', tour.imageCover);
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     mode: 'payment',
