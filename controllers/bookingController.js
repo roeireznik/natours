@@ -73,6 +73,11 @@ const createBookingCheckout = async (session) => {
 
   const price = session.line_items[0].price_data.unit_amount / 100;
   await Booking.create({ tour, user, price });
+  console.log('Booking Data:', { tour, user, price });
+
+  console.log('Tour ID:', tour);
+  console.log('User ID:', user);
+  console.log('Booking created successfully (async)');
 };
 
 exports.webhookCheckout = (req, res, next) => {
