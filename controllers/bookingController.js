@@ -73,8 +73,29 @@ exports.webhookCheckout = (req, res, next) => {
     return res.status(400).send(`Webhook error: ${err.message}`);
   }
   if (event.type === 'checkout.session.completed') {
-    createBookingCheckout(event.data.object);
-    res.status(200).json({ received: true });
+    const session = event.data.object;
+
+    console.log('Checkout Session Completed Event Received!');
+    console.log('Session Object:', session);
+
+    if (session.payment_status === 'paid' && session.status === 'complete') {
+      // <-- Crucial check
+      console.log('Payment is complete. Creating booking...');
+      createBookingCheckout(session)
+        .then(() => {
+          console.log('Booking created successfully (async)');
+        })
+        .catch((error) => {
+          console.error('Error creating booking (async):', error);
+        });
+    } else {
+      console.log('Payment is not yet complete. Not creating booking.');
+      // You might want to handle this case (e.g., send an email to the user)
+    }
+
+    res.status(200).json({ received: true }); // Respond immediately
+  } else {
+    res.status(200).json({ received: true }); // Respond to *all* other events
   }
 };
 
