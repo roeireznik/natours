@@ -58,6 +58,11 @@ const createBookingCheckout = async (session) => {
     console.error('User not found for email:', session.customer_email);
     throw new Error('User not found'); // Stop execution and log the error
   }
+  if (!session.line_items || session.line_items.length === 0) {
+    console.error('No line items found in session:', session);
+    throw new Error('No line items found');
+  }
+
   const price = session.line_items[0].price_data.unit_amount / 100;
   await Booking.create({ tour, user, price });
 };
