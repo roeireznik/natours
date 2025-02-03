@@ -61,17 +61,25 @@ const createBookingCheckout = async (session) => {
 };
 
 exports.webhookCheckout = (req, res, next) => {
-  const signature = req.headers['stripe-signature'];
   let event;
+
   try {
+    const sig = req.headers['stripe-signature'];
+    const body = req.body;
+
     event = stripe.webhooks.constructEvent(
-      req.body,
-      signature,
+      body,
+      sig,
       process.env.STRIPE_WEBHOOK_SECRET,
     );
+
+    console.log('Webhook was hit!');
+    console.log('Event Type:', event.type);
   } catch (err) {
-    return res.status(400).send(`Webhook error: ${err.message}`);
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
@@ -89,8 +97,11 @@ exports.webhookCheckout = (req, res, next) => {
           console.error('Error creating booking (async):', error);
         });
     } else {
-      console.log('Payment is not yet complete. Not creating booking.');
-      // You might want to handle this case (e.g., send an email to the user)
+      console.log(
+        'Payment is not yet complete. Not creating booking.',
+        session.payment_status,
+        session.status,
+      ); // Log status for debugging
     }
 
     res.status(200).json({ received: true }); // Respond immediately
